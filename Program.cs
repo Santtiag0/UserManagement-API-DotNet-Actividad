@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using UsuariosApi.Data;
 using UsuariosApi.Interfaces;
@@ -6,7 +7,22 @@ using UsuariosApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services
+    .AddControllers()
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        // Errores de validación con formato { "mensaje": "..." }
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var mensaje = context.ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage)
+                .FirstOrDefault(m => !string.IsNullOrWhiteSpace(m))
+                ?? "Los datos enviados no son válidos.";
+
+            return new BadRequestObjectResult(new { mensaje });
+        };
+    });
 
 var connectionString =
     builder.Configuration.GetConnectionString("MySql");

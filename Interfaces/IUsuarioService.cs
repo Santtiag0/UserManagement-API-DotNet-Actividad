@@ -17,6 +17,8 @@ public interface IUsuarioService
 
     Task<bool> EliminarAsync(int id);
 
+    Task<bool> CambiarPasswordAsync(int id, CambiarPasswordDto dto);
+
     // LOGIN
     Task<UsuarioDto?> LoginAsync(LoginDto dto);
 }

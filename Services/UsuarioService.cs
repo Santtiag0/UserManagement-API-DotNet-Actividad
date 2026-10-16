@@ -1,5 +1,6 @@
 using UsuariosApi.DTOs;
 using UsuariosApi.Entities;
+using UsuariosApi.Helpers;
 using UsuariosApi.Interfaces;
 
 namespace UsuariosApi.Services;
@@ -54,6 +55,9 @@ public class UsuarioService : IUsuarioService
             );
         }
 
+        var fechaNacimiento = d.FechaNacimiento!.Value;
+        var edad = ValidarFechaNacimiento(fechaNacimiento);
+
         // Convertir contraseña en HASH
         var passwordHash =
             BCrypt.Net.BCrypt.HashPassword(d.Password);
@@ -64,8 +68,10 @@ public class UsuarioService : IUsuarioService
             Apellido = d.Apellido.Trim(),
             Correo = correo,
             PasswordHash = passwordHash,
-            Edad = d.Edad,
-            RolId = d.RolId
+            FechaNacimiento = fechaNacimiento,
+            Edad = edad,
+            Universidad = d.Universidad.Trim(),
+            Semestre = d.Semestre
         };
 
         await _repo.CrearAsync(usuario);
@@ -155,8 +161,34 @@ public class UsuarioService : IUsuarioService
         usuario.Nombre = d.Nombre.Trim();
         usuario.Apellido = d.Apellido.Trim();
         usuario.Correo = correo;
-        usuario.Edad = d.Edad;
+        usuario.FechaNacimiento = d.FechaNacimiento!.Value;
+        usuario.Edad = ValidarFechaNacimiento(usuario.FechaNacimiento);
+        usuario.Universidad = d.Universidad.Trim();
+        usuario.Semestre = d.Semestre;
         usuario.Activo = d.Activo;
+
+        await _repo.ActualizarAsync(usuario);
+
+        return true;
+    }
+
+    // ==========================================
+    // CAMBIAR CONTRASEÑA
+    // ==========================================
+    public async Task<bool> CambiarPasswordAsync(
+        int id,
+        CambiarPasswordDto d)
+    {
+        var usuario =
+            await _repo.ObtenerPorIdAsync(id);
+
+        if (usuario is null)
+        {
+            return false;
+        }
+
+        usuario.PasswordHash =
+            BCrypt.Net.BCrypt.HashPassword(d.Password);
 
         await _repo.ActualizarAsync(usuario);
 
@@ -182,6 +214,30 @@ public class UsuarioService : IUsuarioService
     }
 
     // ==========================================
+    // VALIDAR FECHA DE NACIMIENTO Y CALCULAR EDAD
+    // ==========================================
+    private static int ValidarFechaNacimiento(DateOnly fechaNacimiento)
+    {
+        if (fechaNacimiento > DateOnly.FromDateTime(DateTime.Today))
+        {
+            throw new InvalidOperationException(
+                "La fecha de nacimiento no puede ser futura."
+            );
+        }
+
+        var edad = EdadHelper.CalcularEdad(fechaNacimiento);
+
+        if (edad < 1 || edad > 120)
+        {
+            throw new InvalidOperationException(
+                "La fecha de nacimiento no es válida."
+            );
+        }
+
+        return edad;
+    }
+
+    // ==========================================
     // MAPEO ENTITY -> DTO
     // ==========================================
     private static UsuarioDto Map(Usuario u)
@@ -192,7 +248,10 @@ public class UsuarioService : IUsuarioService
             Nombre = u.Nombre,
             Apellido = u.Apellido,
             Correo = u.Correo,
-            Edad = u.Edad,
+            FechaNacimiento = u.FechaNacimiento,
+            Edad = EdadHelper.CalcularEdad(u.FechaNacimiento),
+            Universidad = u.Universidad,
+            Semestre = u.Semestre,
             Activo = u.Activo,
             FechaCreacion = u.FechaCreacion
         };

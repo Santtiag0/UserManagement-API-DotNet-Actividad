@@ -126,6 +126,30 @@ public class UsuariosController : ControllerBase
     }
 
     // ==========================================
+    // PUT - CAMBIAR CONTRASEÑA
+    // ==========================================
+    [HttpPut("{id:int}/password")]
+    public async Task<IActionResult> CambiarPassword(
+        int id,
+        CambiarPasswordDto dto)
+    {
+        var actualizado =
+            await _service.CambiarPasswordAsync(id, dto);
+
+        if (!actualizado)
+        {
+            return NotFound(
+                new
+                {
+                    mensaje = "Usuario no encontrado."
+                }
+            );
+        }
+
+        return NoContent();
+    }
+
+    // ==========================================
     // DELETE - ELIMINAR USUARIO
     // ==========================================
     [HttpDelete("{id:int}")]
