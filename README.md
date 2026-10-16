@@ -162,12 +162,12 @@ Ejecutar `Database/cambios_usuarios.sql`:
 ```json
 POST /api/Usuarios
 {
-  "nombre": "Alexander",
-  "apellido": "Navarro",
-  "correo": "alex@correo.com",
+  "nombre": "Usuario",
+  "apellido": "Prueba",
+  "correo": "usuario@correo.com",
   "password": "123456",
   "fechaNacimiento": "2002-05-14",
-  "universidad": "UCompensar",
+  "universidad": "Universidad de prueba",
   "semestre": 5
 }
 ```
